@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   camera: ^0.11.0+2
   pytorch_lite: ^4.3.0
+  flutter_tts: ^4.2.0
 
 dev_dependencies:
   flutter_test:

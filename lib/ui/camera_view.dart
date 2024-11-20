@@ -2,6 +2,8 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:cross_mate/utils/memory_manager.dart';
+import 'package:cross_mate/utils/tts_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pytorch_lite/pytorch_lite.dart';
@@ -11,7 +13,8 @@ import 'camera_view_singleton.dart';
 /// [CameraView] sends each frame for inference
 class CameraView extends StatefulWidget {
   /// Callback to pass results after inference to [HomeView]
-  final Function(List<ResultObjectDetection> recognitions, Duration inferenceTime) resultsCallback;
+  final Function(List<ResultObjectDetection> recognitions, Duration inferenceTime, Object? beforeMemoryUsage,
+      Object? afterMemoryUsage) resultsCallback;
   final Function(String classification, Duration? inferenceTime) resultsCallbackClassification;
 
   /// Constructor
@@ -184,6 +187,8 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     });
   }
 
+  final ttsManager = TtsManager.instance;
+
   Future<void> runObjectDetection(CameraImage cameraImage) async {
     if (predictingObjectDetection) {
       return;
@@ -198,23 +203,28 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     if (_objectModel != null) {
       // Start the stopwatch
       Stopwatch stopwatch = Stopwatch()..start();
+      final beforeMemory =
+          Platform.isAndroid ? await MemoryManager.getMemoryUsage() : await MemoryManager.getResidentMemory();
 
       List<ResultObjectDetection> objDetect = await _objectModel!.getCameraImagePrediction(
         cameraImage,
         rotation: _camFrameRotation,
-        minimumScore: 0.5,
+        minimumScore: 0.6,
         iOUThreshold: 0.3,
       );
 
       // Stop the stopwatch
       stopwatch.stop();
+      final afterMemory =
+          Platform.isAndroid ? await MemoryManager.getMemoryUsage() : await MemoryManager.getResidentMemory();
 
       if (objDetect.any((e) => (e).className == "laptop")) {
         print("laptop detected");
+        ttsManager.speak("전방에 노트북입니다.");
       }
 
       // print("data outputted $objDetect");
-      widget.resultsCallback(objDetect, stopwatch.elapsed);
+      widget.resultsCallback(objDetect, stopwatch.elapsed, beforeMemory, afterMemory);
     }
     if (!mounted) {
       return;

@@ -30,6 +30,8 @@ class RunModelByCamera extends StatefulWidget {
 class RunModelByCameraState extends State<RunModelByCamera> {
   List<ResultObjectDetection>? results;
   Duration? objectDetectionInferenceTime;
+  Object? objectDetectionBeforeMemoryUsage;
+  Object? objectDetectionAfterMemoryUsage;
 
   String? classification;
   Duration? classificationInferenceTime;
@@ -101,6 +103,10 @@ class RunModelByCameraState extends State<RunModelByCamera> {
                               if (objectDetectionInferenceTime != null)
                                 StatsRow('Object Detection Inference time:',
                                     '${objectDetectionInferenceTime?.inMilliseconds} ms'),
+                              if (objectDetectionBeforeMemoryUsage != null)
+                                StatsRow('Before Memory Usage', '$objectDetectionBeforeMemoryUsage bytes'),
+                              if (objectDetectionAfterMemoryUsage != null)
+                                StatsRow('After Memory Usage', '$objectDetectionAfterMemoryUsage bytes'),
                             ],
                           ),
                         )
@@ -126,25 +132,28 @@ class RunModelByCameraState extends State<RunModelByCamera> {
     );
   }
 
-  void resultsCallback(List<ResultObjectDetection> results, Duration inferenceTime) {
+  void resultsCallback(List<ResultObjectDetection> results, Duration inferenceTime, Object? beforeMemoryUsage,
+      Object? afterMemoryUsage) {
     if (!mounted) {
       return;
     }
     setState(() {
       this.results = results;
       objectDetectionInferenceTime = inferenceTime;
-      for (var element in results) {
-        print({
-          "rect": {
-            "left": element.rect.left,
-            "top": element.rect.top,
-            "width": element.rect.width,
-            "height": element.rect.height,
-            "right": element.rect.right,
-            "bottom": element.rect.bottom,
-          },
-        });
-      }
+      objectDetectionBeforeMemoryUsage = beforeMemoryUsage;
+      objectDetectionAfterMemoryUsage = afterMemoryUsage;
+      // for (var element in results) {
+      //   print({
+      //     "rect": {
+      //       "left": element.rect.left,
+      //       "top": element.rect.top,
+      //       "width": element.rect.width,
+      //       "height": element.rect.height,
+      //       "right": element.rect.right,
+      //       "bottom": element.rect.bottom,
+      //     },
+      //   });
+      // }
     });
   }
 
